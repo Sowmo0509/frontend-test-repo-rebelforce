@@ -186,21 +186,9 @@ Follow these steps in order:
     ```bash
     cd backend
     npx prisma generate
-    npx prisma migrate dev
     ```
 
-    **Note**: `prisma migrate dev` will apply existing migrations and create new ones if needed. If you're setting up for the first time, this will apply all migrations from the `prisma/migrations` directory.
-
-3.  **Seed the Database** (Optional but recommended for testing)
-
-    ```bash
-    cd backend
-    npx prisma db seed
-    ```
-
-    This will populate the database with sample users, funds, and documents. See the [Test Credentials](#test-credentials) section below for login information.
-
-4.  **Configure Environment Variables** (if needed)
+3.  **Configure Environment Variables** (if needed)
 
     The backend uses environment variables. For local development with Docker, the database connection is configured in `docker-compose.yml`. If you need to override defaults, create a `.env` file in the `backend` directory:
 
@@ -210,7 +198,7 @@ Follow these steps in order:
     JWT_SECRET="your-secret-key-here"
     ```
 
-5.  **Start the Backend Server**
+4.  **Start the Backend Server**
 
     ```bash
     cd backend
@@ -219,7 +207,7 @@ Follow these steps in order:
 
     The backend server will run on `http://localhost:3000`. You can access the API documentation at `http://localhost:3000/api` (Swagger UI).
 
-6.  **Start the Frontend Application**
+5.  **Start the Frontend Application**
 
     Open a new terminal window:
 
