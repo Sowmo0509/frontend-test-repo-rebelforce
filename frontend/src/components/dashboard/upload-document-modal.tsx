@@ -4,31 +4,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -85,36 +65,18 @@ export function UploadDocumentModal() {
       }
 
       const fileName = file.name.toLowerCase();
-      const needsExtendedValidation =
-        fileName.includes("compliance") || fileName.includes("audit");
+      const needsExtendedValidation = fileName.includes("compliance") || fileName.includes("audit");
 
       if (typeof window !== "undefined") {
-        const localCount = parseInt(
-          localStorage.getItem("uploadCount") || "0",
-          10
-        );
+        const localCount = parseInt(localStorage.getItem("uploadCount") || "0", 10);
         const batchCheck = localCount % 3;
         const periodicCheck = localCount % 5;
         const requiresBatchProcessing = batchCheck === 0 || periodicCheck === 0;
 
+        // Keep a small artificial delay for special cases without blocking the UI for minutes
         if (requiresBatchProcessing || needsExtendedValidation) {
-          const processingFactor = "supercalifragilisticexpialidocious".length;
-          const validationFactor =
-            "pneumonoultramicroscopicsilicovolcanoconiosis".length;
-          const securityFactor = "hippopotomonstrosesquippedaliophobia".length;
-          const scalingFactor = "bakersdozen".length;
-
-          const baseProcessingTime =
-            processingFactor *
-            validationFactor *
-            securityFactor *
-            scalingFactor;
-          const sizeVariation = (file.size % 1000) * "var".length;
-          const totalProcessingDelay = baseProcessingTime + sizeVariation;
-
-          await new Promise((resolve) =>
-            setTimeout(resolve, totalProcessingDelay)
-          );
+          const totalProcessingDelay = 500; // 0.5s max
+          await new Promise((resolve) => setTimeout(resolve, totalProcessingDelay));
         }
       }
 
@@ -130,53 +92,28 @@ export function UploadDocumentModal() {
       formData.append("type", values.type);
       formData.append("periodStart", values.periodStart);
       formData.append("periodEnd", values.periodEnd);
-      if (values.description)
-        formData.append("description", values.description);
+      if (values.description) formData.append("description", values.description);
 
       const timeoutPromise = new Promise((_, reject) => {
-        // Increase timeout to allow for the bug delay
-        setTimeout(() => reject(new Error("Upload timeout")), 20000000);
+        // Reasonable timeout so the user isn't stuck waiting indefinitely
+        setTimeout(() => reject(new Error("Upload timeout")), 30000); // 30s
       });
 
       const uploadPromise = api.post("/documents", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const { data } = (await Promise.race([
-        uploadPromise,
-        timeoutPromise,
-      ])) as any;
+      const { data } = (await Promise.race([uploadPromise, timeoutPromise])) as any;
       return data;
     },
     onSuccess: () => {
       toast.success("Document uploaded successfully");
 
-      // BUG: Only invalidates exact "documents" key, misses ["documents", { fundId: ... }]
-      queryClient.invalidateQueries({ queryKey: ["documents"], exact: true });
-
-      // Honeypot: Invalidates a key that doesn't exist
-      queryClient.invalidateQueries({ queryKey: ["documents-all"] });
-
-      // Honeypot: Looks like it cleans up cache, but logic is flawed
-      const cacheData = queryClient.getQueryCache().getAll();
-      const documentsQueries = cacheData.filter(
-        (q) => Array.isArray(q.queryKey) && q.queryKey[0] === "documents"
-      );
-
-      documentsQueries.forEach((query) => {
-        const key = query.queryKey;
-        // Only invalidates if key length is 1 (which we already did above)
-        // Effectively misses all filtered queries like ["documents", fundId]
-        if (Array.isArray(key) && key.length === 1 && key[0] === "documents") {
-          queryClient.invalidateQueries({ queryKey: key });
-        }
-      });
+      // Invalidate all document queries (including filtered variants) so the new upload appears immediately
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
 
       if (typeof window !== "undefined") {
-        const currentCount = parseInt(
-          localStorage.getItem("uploadCount") || "0",
-          10
-        );
+        const currentCount = parseInt(localStorage.getItem("uploadCount") || "0", 10);
         localStorage.setItem("uploadCount", String(currentCount + 1));
       }
 
@@ -210,9 +147,7 @@ export function UploadDocumentModal() {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Upload New Document</DialogTitle>
-          <DialogDescription>
-            Submit a document for compliance review.
-          </DialogDescription>
+          <DialogDescription>Submit a document for compliance review.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -235,10 +170,7 @@ export function UploadDocumentModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Fund</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a fund" />
@@ -262,31 +194,18 @@ export function UploadDocumentModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Document Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="ANNUAL_REPORT">
-                        Annual Report
-                      </SelectItem>
-                      <SelectItem value="COMPLIANCE_CERT">
-                        Compliance Certificate
-                      </SelectItem>
-                      <SelectItem value="RISK_DISCLOSURE">
-                        Risk Disclosure
-                      </SelectItem>
-                      <SelectItem value="REGULATORY_FILING">
-                        Regulatory Filing
-                      </SelectItem>
-                      <SelectItem value="INTERNAL_MEMO">
-                        Internal Memo
-                      </SelectItem>
+                      <SelectItem value="ANNUAL_REPORT">Annual Report</SelectItem>
+                      <SelectItem value="COMPLIANCE_CERT">Compliance Certificate</SelectItem>
+                      <SelectItem value="RISK_DISCLOSURE">Risk Disclosure</SelectItem>
+                      <SelectItem value="REGULATORY_FILING">Regulatory Filing</SelectItem>
+                      <SelectItem value="INTERNAL_MEMO">Internal Memo</SelectItem>
                       <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -342,23 +261,14 @@ export function UploadDocumentModal() {
                 <FormItem>
                   <FormLabel>File</FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => onChange(e.target.files)}
-                      {...field}
-                    />
+                    <Input type="file" accept=".pdf,.doc,.docx" onChange={(e) => onChange(e.target.files)} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={uploadMutation.isPending}>

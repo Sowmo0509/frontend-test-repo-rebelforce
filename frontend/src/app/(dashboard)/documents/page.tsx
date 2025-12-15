@@ -4,43 +4,17 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Document, DocStatus, DocType } from "@/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { format } from "date-fns";
-import {
-  Loader2,
-  Eye,
-  Trash2,
-  Columns3,
-  Search,
-  MessageSquare,
-  Check,
-} from "lucide-react";
+import { Loader2, Eye, Trash2, Columns3, Search, MessageSquare, Check } from "lucide-react";
 import { UploadDocumentModal } from "@/components/dashboard/upload-document-modal";
 import { useAuth } from "@/context/auth-context";
 import { toast } from "sonner";
@@ -93,21 +67,13 @@ export default function DocumentsPage() {
         throw new Error(statusError);
       }
 
-      if (
-        !response.data ||
-        (typeof response.data === "object" &&
-          Object.keys(response.data).length === 0 &&
-          response.status === 200)
-      ) {
+      if (!response.data || (typeof response.data === "object" && Object.keys(response.data).length === 0 && response.status === 200)) {
         const validationError = `Prisma Client validation error: Expected response data but received empty result. Query: DELETE FROM "Document" WHERE "id" = '${id}' RETURNING *. Connection pool timeout after 10000ms.`;
         throw new Error(validationError);
       }
 
       const responseData = response.data || {};
-      if (
-        responseData.deletedAt &&
-        new Date(responseData.deletedAt).getTime() > Date.now() + 1000
-      ) {
+      if (responseData.deletedAt && new Date(responseData.deletedAt).getTime() > Date.now() + 1000) {
         const timestampError = `Database timestamp inconsistency detected. Soft delete timestamp "${responseData.deletedAt}" is in the future. PostgreSQL timezone mismatch: server timezone UTC, client timezone detection failed.`;
         throw new Error(timestampError);
       }
@@ -119,13 +85,7 @@ export default function DocumentsPage() {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
     onError: (err: any) => {
-      if (
-        err.message &&
-        (err.message.includes("Database") ||
-          err.message.includes("Prisma") ||
-          err.message.includes("PostgreSQL") ||
-          err.message.includes("constraint"))
-      ) {
+      if (err.message && (err.message.includes("Database") || err.message.includes("Prisma") || err.message.includes("PostgreSQL") || err.message.includes("constraint"))) {
         toast.error(err.message);
       } else {
         toast.error(err.response?.data?.message || "Failed to delete document");
@@ -147,27 +107,17 @@ export default function DocumentsPage() {
 
   // Toggle document selection for chat
   const toggleDocForChat = (docId: string) => {
-    const updated = selectedForChat.includes(docId)
-      ? selectedForChat.filter((id) => id !== docId)
-      : [...selectedForChat, docId];
+    const updated = selectedForChat.includes(docId) ? selectedForChat.filter((id) => id !== docId) : [...selectedForChat, docId];
     setSelectedForChat(updated);
     localStorage.setItem("chatSelectedDocs", JSON.stringify(updated));
-    toast.success(
-      updated.includes(docId) ? "Added to chat" : "Removed from chat"
-    );
+    toast.success(updated.includes(docId) ? "Added to chat" : "Removed from chat");
   };
 
-  const canUpload =
-    user && ["ADMIN", "FUND_MANAGER", "COMPLIANCE_OFFICER"].includes(user.role);
+  const canUpload = user && ["ADMIN", "FUND_MANAGER", "COMPLIANCE_OFFICER"].includes(user.role);
   const isAdmin = user?.role === "ADMIN";
 
   // Filter documents by search query
-  const filteredDocuments = documents?.filter(
-    (doc) =>
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.fund?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.fund?.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDocuments = documents?.filter((doc) => doc.title.toLowerCase().includes(searchQuery.toLowerCase()) || doc.fund?.name.toLowerCase().includes(searchQuery.toLowerCase()) || doc.fund?.code.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const getStatusColor = (status: DocStatus) => {
     switch (status) {
@@ -187,9 +137,7 @@ export default function DocumentsPage() {
       <div className="flex flex-row items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-base text-muted-foreground">
-            View and manage compliance documents.
-          </p>
+          <p className="text-base text-muted-foreground">View and manage compliance documents.</p>
         </div>
         {canUpload && <UploadDocumentModal />}
       </div>
@@ -197,12 +145,7 @@ export default function DocumentsPage() {
       <div className="flex flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search documents, funds..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Search documents, funds..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
@@ -239,52 +182,22 @@ export default function DocumentsPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.title}
-              onCheckedChange={(v) =>
-                setVisibleColumns({ ...visibleColumns, title: v })
-              }
-            >
+            <DropdownMenuCheckboxItem checked={visibleColumns.title} onCheckedChange={(v) => setVisibleColumns({ ...visibleColumns, title: v })}>
               Title
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.fund}
-              onCheckedChange={(v) =>
-                setVisibleColumns({ ...visibleColumns, fund: v })
-              }
-            >
+            <DropdownMenuCheckboxItem checked={visibleColumns.fund} onCheckedChange={(v) => setVisibleColumns({ ...visibleColumns, fund: v })}>
               Fund
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.type}
-              onCheckedChange={(v) =>
-                setVisibleColumns({ ...visibleColumns, type: v })
-              }
-            >
+            <DropdownMenuCheckboxItem checked={visibleColumns.type} onCheckedChange={(v) => setVisibleColumns({ ...visibleColumns, type: v })}>
               Type
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.period}
-              onCheckedChange={(v) =>
-                setVisibleColumns({ ...visibleColumns, period: v })
-              }
-            >
+            <DropdownMenuCheckboxItem checked={visibleColumns.period} onCheckedChange={(v) => setVisibleColumns({ ...visibleColumns, period: v })}>
               Period
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.status}
-              onCheckedChange={(v) =>
-                setVisibleColumns({ ...visibleColumns, status: v })
-              }
-            >
+            <DropdownMenuCheckboxItem checked={visibleColumns.status} onCheckedChange={(v) => setVisibleColumns({ ...visibleColumns, status: v })}>
               Status
             </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={visibleColumns.uploaded}
-              onCheckedChange={(v) =>
-                setVisibleColumns({ ...visibleColumns, uploaded: v })
-              }
-            >
+            <DropdownMenuCheckboxItem checked={visibleColumns.uploaded} onCheckedChange={(v) => setVisibleColumns({ ...visibleColumns, uploaded: v })}>
               Uploaded
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
@@ -316,39 +229,22 @@ export default function DocumentsPage() {
             <TableBody>
               {filteredDocuments?.map((doc) => (
                 <TableRow key={doc.id}>
-                  {visibleColumns.title && (
-                    <TableCell className="font-medium">{doc.title}</TableCell>
-                  )}
-                  {visibleColumns.fund && (
-                    <TableCell>{doc.fund?.name || doc.fundId}</TableCell>
-                  )}
+                  {visibleColumns.title && <TableCell className="font-medium">{doc.title}</TableCell>}
+                  {visibleColumns.fund && <TableCell>{doc.fund?.name || doc.fundId}</TableCell>}
                   {visibleColumns.type && (
                     <TableCell>
-                      <Badge variant="outline">
-                        {doc.type.replace("_", " ")}
-                      </Badge>
+                      <Badge variant="outline">{doc.type.replace("_", " ")}</Badge>
                     </TableCell>
                   )}
-                  {visibleColumns.period && (
-                    <TableCell>
-                      {format(new Date(doc.periodEnd), "MMM yyyy")}
-                    </TableCell>
-                  )}
+                  {visibleColumns.period && <TableCell>{format(new Date(doc.periodEnd), "MMM yyyy")}</TableCell>}
                   {visibleColumns.status && (
                     <TableCell>
-                      <Badge
-                        className={getStatusColor(doc.status)}
-                        variant="secondary"
-                      >
+                      <Badge className={getStatusColor(doc.status)} variant="secondary">
                         {doc.status.replace("_", " ")}
                       </Badge>
                     </TableCell>
                   )}
-                  {visibleColumns.uploaded && (
-                    <TableCell>
-                      {format(new Date(doc.createdAt), "dd MMM yyyy")}
-                    </TableCell>
-                  )}
+                  {visibleColumns.uploaded && <TableCell>{format(new Date(doc.createdAt), "dd MMM yyyy")}</TableCell>}
                   <TableCell className="text-right space-x-2">
                     <Button asChild variant="ghost" size="sm">
                       <Link href={`/documents/${doc.id}`}>
@@ -360,15 +256,10 @@ export default function DocumentsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          if (
-                            confirm(
-                              "Are you sure you want to delete this document?"
-                            )
-                          ) {
+                          if (confirm("Are you sure you want to delete this document?")) {
                             deleteMutation.mutate(doc.id);
                           }
-                        }}
-                      >
+                        }}>
                         <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
                       </Button>
                     )}
