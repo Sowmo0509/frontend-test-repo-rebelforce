@@ -5,22 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/context/auth-context";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -53,13 +39,23 @@ export default function LoginPage() {
       await login(data.access_token);
       toast.success("Logged in successfully");
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "";
-      if (errorMessage.includes("Access denied")) {
-        toast.error(
-          "Permission denied: Session validation failed due to incomplete token payload structure"
-        );
+      const status = error.response?.status;
+      const backendMessage = error.response?.data?.message;
+
+      if (status === 401) {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (status === 403) {
+        toast.error(backendMessage || "Your account does not have permission to access this application. Please contact an administrator.");
+      } else if (status === 429) {
+        toast.error("Too many login attempts. Please wait a moment and try again.");
+      } else if (status === 500) {
+        toast.error("Server error while logging in. Please try again later.");
+      } else if (backendMessage && typeof backendMessage === "string") {
+        toast.error(backendMessage);
+      } else if (error.message?.includes("Network Error")) {
+        toast.error("Network error. Please check your connection and try again.");
       } else {
-        toast.error("Invalid credentials");
+        toast.error("Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -70,12 +66,8 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
       <Card className="w-[400px] dark:bg-gray-900 dark:border-gray-800">
         <CardHeader>
-          <CardTitle className="dark:text-gray-100">
-            Login to Audit Vault
-          </CardTitle>
-          <CardDescription className="dark:text-gray-400">
-            Enter your credentials to access the system.
-          </CardDescription>
+          <CardTitle className="dark:text-gray-100">Login to Audit Vault</CardTitle>
+          <CardDescription className="dark:text-gray-400">Enter your credentials to access the system.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -102,22 +94,9 @@ export default function LoginPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-500" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-gray-500" />
-                          )}
+                        <Input type={showPassword ? "text" : "password"} {...field} />
+                        <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                          {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                         </Button>
                       </div>
                     </FormControl>

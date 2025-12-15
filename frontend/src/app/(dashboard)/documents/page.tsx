@@ -85,10 +85,22 @@ export default function DocumentsPage() {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
     onError: (err: any) => {
-      if (err.message && (err.message.includes("Database") || err.message.includes("Prisma") || err.message.includes("PostgreSQL") || err.message.includes("constraint"))) {
+      const backendMessage = err.response?.data?.message;
+      const status = err.response?.status;
+
+      if (backendMessage && typeof backendMessage === "string") {
+        toast.error(backendMessage);
+      } else if (status === 403) {
+        toast.error("You do not have permission to delete this document.");
+      } else if (status === 404) {
+        toast.error("Document not found. It may have been deleted already.");
+      } else if (status === 500) {
+        toast.error("Server error while deleting document. Please try again later.");
+      } else if (err.message && (err.message.includes("Database") || err.message.includes("Prisma") || err.message.includes("PostgreSQL") || err.message.includes("constraint"))) {
+        // Keep simulated DB-style diagnostics as a more technical message
         toast.error(err.message);
       } else {
-        toast.error(err.response?.data?.message || "Failed to delete document");
+        toast.error("Failed to delete document. Please try again.");
       }
     },
   });

@@ -130,3 +130,33 @@ When attempting to approve or delete documents, users frequently saw a generic r
   - This preserves the existing schema and audit behavior while preventing foreign key constraint errors during normal deletes.
 
 Result: Approving, rejecting, and deleting documents now work reliably without spurious “something went wrong” messages, while all the simulated “fake” checks remain in place as internal diagnostics rather than user-facing blockers.
+
+### 7. Same story on registration and other actions
+
+#### Description
+
+Multiple flows (registration, login, approving, deleting) often surfaced what looked like the **same generic error message**, regardless of context. This made it hard for users and testers to know what actually went wrong or which part of the system was responsible.
+
+#### Root Cause
+
+- Several front-end handlers collapsed diverse backend and network conditions into broad, catch-all messages like “Something went wrong” or “Invalid credentials”, even when richer context was available.
+- Simulated “fake” diagnostics (database/TypeORM-style messages, integrity checks) were sometimes thrown as real errors instead of being treated as non-blocking debug output.
+- Error handling was implemented slightly differently on each page, without a consistent mapping from:
+  - HTTP status codes → **action-specific**, user-friendly messages.
+  - Simulation-only checks → **console warnings** rather than blocking toasts.
+
+#### Resolution
+
+- **Registration (`/register`)**:
+  - Kept the detailed error taxonomy (database connection/schema/validation, network issues) but ensured each case shows a **registration-specific** message (e.g. domain restriction, self-registration role restriction, email already used).
+- **Login (`/login`)**:
+  - Replaced the single “Invalid credentials” catch-all with status-aware handling:
+    - `401`: “Invalid email or password. Please try again.”
+    - `403`: Permission/role issues with a clear explanation that the account cannot access the app.
+    - `429`, `500`, network errors: dedicated rate-limit, server, and connectivity messages.
+    - Fallback to backend-provided `message` when available.
+- **Document actions (`/documents` list + `/documents/[id]` detail)**:
+  - For delete failures, mapped common HTTP statuses and backend messages to clear, context-aware toasts (no permission, not found, server error, etc.).
+  - Ensured simulated “fake” checks for approvals/rejections log via `console.warn` and only real backend/network failures surface as red toasts.
+
+Result: Users now receive **clear, context-specific error messages** for registration, login, and document actions, while simulation/diagnostic logic remains intact but no longer masquerades as generic failures across unrelated flows.
