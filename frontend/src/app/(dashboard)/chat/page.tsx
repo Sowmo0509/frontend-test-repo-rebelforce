@@ -71,13 +71,7 @@ export default function ChatPage() {
     }
   }, [docsError]);
 
-  const selectedDocs = useMemo(
-    () =>
-      (allDocuments || []).filter((doc) =>
-        selectedDocIds.includes(doc.id as string)
-      ),
-    [allDocuments, selectedDocIds]
-  );
+  const selectedDocs = useMemo(() => (allDocuments || []).filter((doc) => selectedDocIds.includes(doc.id as string)), [allDocuments, selectedDocIds]);
 
   const stats = useMemo(() => {
     if (!allDocuments) return { totalDocs: 0, pending: 0, approved: 0, rejected: 0 };
@@ -105,12 +99,14 @@ export default function ChatPage() {
     try {
       const { data } = await api.get<ChatSession>(`/chat/sessions/${id}`);
       setCurrentSessionId(data.id);
-      setMessages((data.messages || []).map((m) => ({
-        id: m.id,
-        role: m.role === "assistant" ? "assistant" : "user",
-        content: m.content,
-        createdAt: m.createdAt,
-      })));
+      setMessages(
+        (data.messages || []).map((m) => ({
+          id: m.id,
+          role: m.role === "assistant" ? "assistant" : "user",
+          content: m.content,
+          createdAt: m.createdAt,
+        }))
+      );
     } catch {
       toast.error("Failed to load chat session");
     }
@@ -203,10 +199,7 @@ export default function ChatPage() {
 
       refetchSessions();
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-          "Failed to send message to AI assistant"
-      );
+      toast.error(err?.response?.data?.message || "Failed to send message to AI assistant");
       // Remove the optimistic message on failure
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } finally {
@@ -215,72 +208,39 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px,minmax(0,1fr)] gap-4 h-[calc(100vh-6rem)]">
-      <div className="border rounded-lg bg-white dark:bg-gray-950 p-3 overflow-hidden">
-        {isLoadingSessions || isLoadingDocs ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-5 w-5 animate-spin" />
-          </div>
-        ) : (
-          <ChatSidebar
-            sessions={sessions || []}
-            currentSessionId={currentSessionId}
-            loadSession={loadSession}
-            deleteSession={deleteSession}
-            stats={stats}
-            selectedDocIds={selectedDocIds}
-            selectedDocs={selectedDocs}
-            docModalOpen={docModalOpen}
-            setDocModalOpen={setDocModalOpen}
-            allDocuments={allDocuments || []}
-            toggleDocSelection={toggleDocSelection}
-            saveDocSelection={saveDocSelection}
-            removeDoc={removeDoc}
-            isLoadingStats={isLoadingDocs}
-          />
-        )}
-      </div>
-
-      <Card className="flex flex-col h-full bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800">
+    <div className="grid grid-cols-4 lg:grid-cols-[320px,minmax(0,1fr)] gap-4 h-[calc(100vh-10rem)] min-h-0">
+      <Card className="flex flex-col h-full min-h-0 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 col-span-3">
         <div className="border-b px-4 py-3 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Audit Assistant</h2>
-            <p className="text-xs text-muted-foreground">
-              Ask questions about your selected documents, compliance status, and audits.
-            </p>
+            <p className="text-xs text-muted-foreground">Ask questions about your selected documents, compliance status, and audits.</p>
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-4 py-3">
-          <div className="space-y-3">
-            {messages.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground mt-10">
-                Start a conversation by asking about your documents, e.g.{" "}
-                <span className="italic">
-                  &quot;Do my selected documents cover all quarterly reports for 2024?&quot;
-                </span>
-              </div>
-            )}
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex ${
-                  m.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-50"
-                  }`}
-                >
-                  {m.content}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full px-4 py-3">
+            <div className="space-y-3">
+              {messages.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground mt-10">
+                  Start a conversation by asking about your documents, e.g. <span className="italic">&quot;Do my selected documents cover all quarterly reports for 2024?&quot;</span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+              )}
+              {messages.map((m) => (
+                <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${m.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-50"}`}>{m.content}</div>
+                </div>
+              ))}
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs bg-gray-100 dark:bg-gray-800 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Thinking…</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
         <div className="border-t px-4 py-3 flex gap-2">
           <Input
@@ -294,19 +254,21 @@ export default function ChatPage() {
               }
             }}
           />
-          <Button
-            onClick={handleSend}
-            disabled={isSending || !input.trim()}
-            className="shrink-0"
-          >
-            {isSending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+          <Button onClick={handleSend} disabled={isSending || !input.trim()} className="shrink-0">
+            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </Card>
+
+      <div className="border rounded-lg dark:bg-gray-950 p-3 overflow-hidden min-h-0">
+        {isLoadingSessions || isLoadingDocs ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : (
+          <ChatSidebar sessions={sessions || []} currentSessionId={currentSessionId} loadSession={loadSession} deleteSession={deleteSession} stats={stats} selectedDocIds={selectedDocIds} selectedDocs={selectedDocs} docModalOpen={docModalOpen} setDocModalOpen={setDocModalOpen} allDocuments={allDocuments || []} toggleDocSelection={toggleDocSelection} saveDocSelection={saveDocSelection} removeDoc={removeDoc} isLoadingStats={isLoadingDocs} />
+        )}
+      </div>
     </div>
   );
 }

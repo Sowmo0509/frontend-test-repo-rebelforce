@@ -156,9 +156,11 @@ export class ChatService {
     }
 
     const systemPrompt = `You are an AI assistant helping with investment fund compliance documents inside an internal tool called Audit Vault.
-- Be precise and conservative: never invent document contents.
-- When asked about compliance, base your answers ONLY on the provided document metadata and user messages.
-- If something is unclear or not in the data, explicitly say what is missing.`;
+Write responses in clear plain text without markdown formatting (no asterisks, headings, or bullet syntax).
+Be concise and structured using short paragraphs.
+Be precise and conservative: never invent document contents.
+When asked about compliance, base your answers ONLY on the provided document metadata and user messages.
+If something is unclear or not in the data, explicitly say what is missing.`;
 
     const messagesPayload: Array<{ role: string; content: string }> = [
       { role: 'system', content: systemPrompt },
@@ -179,7 +181,9 @@ export class ChatService {
     }
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<{
+        choices?: { message?: { content?: string } }[];
+      }>(
         'https://openrouter.ai/api/v1/chat/completions',
         {
           model: this.openRouterModel,
@@ -196,9 +200,12 @@ export class ChatService {
         },
       );
 
-      const assistantContent =
+      const rawAssistantContent =
         response.data?.choices?.[0]?.message?.content ??
         'Sorry, I could not generate a response.';
+
+      const assistantContent =
+        this.sanitizeAssistantContent(rawAssistantContent);
 
       const assistantMessage = await this.prisma.chatMessage.create({
         data: {
@@ -216,12 +223,34 @@ export class ChatService {
       };
     } catch (error) {
       // Surface a user-friendly message while logging the underlying error
-      // eslint-disable-next-line no-console
       console.error('OpenRouter chat error', error);
       throw new InternalServerErrorException(
         'Failed to get a response from the AI assistant. Please try again later.',
       );
     }
   }
-}
 
+  // Fixing messy output from AI assitants like **text**, *text*, _text_ etc
+  private sanitizeAssistantContent(content: string): string {
+    if (!content) return content;
+
+    // Remove bold/italic markers like **text**, *text*, _text_
+    let cleaned = content.replace(/\*\*(.+?)\*\*/g, '$1');
+    cleaned = cleaned.replace(/\*(.+?)\*/g, '$1');
+    cleaned = cleaned.replace(/_(.+?)_/g, '$1');
+
+    const lines = cleaned.split('\n').map((line) => {
+      let current = line;
+
+      // Remove markdown headings (e.g. "# Title", "## Section")
+      current = current.replace(/^\s*#{1,6}\s+/, '');
+
+      // Turn "- Title: q3 2025" into "Title: q3 2025"
+      current = current.replace(/^\s*-\s+/, '');
+
+      return current;
+    });
+
+    return lines.join('\n').trim();
+  }
+}
