@@ -191,3 +191,19 @@ On smaller screens or when resizing the browser, the `/documents` and `/users` p
   - Constrained the email column with `max-w-xs truncate` so long addresses don’t blow out the layout on narrow screens.
 
 Result: Both Documents and Users pages now adapt cleanly across screen sizes—controls stack and resize appropriately on small devices, tables remain readable with horizontal scroll where needed, and content no longer feels cramped or broken when the browser is resized.
+
+### 9. Chat feature inside Audit Vault using OpenRouter
+
+#### Description
+
+Users needed an integrated chat experience to ask questions about their uploaded compliance documents directly inside Audit Vault.
+
+#### Resolution
+
+- Implemented a NestJS `ChatModule` using Prisma `ChatSession` and `ChatMessage` models, exposing `/chat/sessions` and `/chat/send` endpoints behind JWT auth.
+- Connected the backend to OpenRouter’s `/api/v1/chat/completions`, sending conversation history and selected document metadata as structured context.
+- Replaced the `/chat` frontend route with a compact, responsive chat UI that:
+  - Talks only to the backend via React Query and the shared Axios client.
+  - Shares document selection with the Documents page through `localStorage` (`chatSelectedDocs`).
+  - Shows chat history, referenced documents, and a small “thinking” indicator while the AI generates responses.
+
