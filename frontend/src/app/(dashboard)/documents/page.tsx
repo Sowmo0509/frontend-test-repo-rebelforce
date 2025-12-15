@@ -146,7 +146,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-row items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
           <p className="text-base text-muted-foreground">View and manage compliance documents.</p>
@@ -154,13 +154,13 @@ export default function DocumentsPage() {
         {canUpload && <UploadDocumentModal />}
       </div>
 
-      <div className="flex flex-row gap-2">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search documents, funds..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filter by Status" />
           </SelectTrigger>
           <SelectContent>
@@ -174,7 +174,7 @@ export default function DocumentsPage() {
         </Select>
 
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Filter by Type" />
           </SelectTrigger>
           <SelectContent>
@@ -189,7 +189,7 @@ export default function DocumentsPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="flex">
+            <Button variant="outline" size="icon" className="flex shrink-0">
               <Columns3 className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

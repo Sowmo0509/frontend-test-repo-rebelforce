@@ -160,3 +160,34 @@ Multiple flows (registration, login, approving, deleting) often surfaced what lo
   - Ensured simulated “fake” checks for approvals/rejections log via `console.warn` and only real backend/network failures surface as red toasts.
 
 Result: Users now receive **clear, context-specific error messages** for registration, login, and document actions, while simulation/diagnostic logic remains intact but no longer masquerades as generic failures across unrelated flows.
+
+### 8. Documents and Users pages get awkward on different screen sizes
+
+#### Description
+
+On smaller screens or when resizing the browser, the `/documents` and `/users` pages became cramped and awkward:
+
+- Filters and controls were tightly packed in a single horizontal row, causing overlap or wrapping in unattractive ways.
+- Tables were hard to read on narrow viewports, with long email addresses and other text pushing layouts beyond the viewport.
+
+#### Root Cause
+
+- Both pages used **desktop-first flex layouts**, assuming plenty of horizontal space:
+  - Header sections (`title` + actions) were laid out in a single row.
+  - Filter bars (search + selects + controls) used `flex-row` with fixed-width triggers.
+- Table cells (especially emails) had no width constraints, so they expanded horizontally on small screens instead of truncating.
+
+#### Resolution
+
+- **Documents page (`/documents`)**:
+  - Updated the header and filter sections to be **column-based on small screens** and switch to row layout only at `sm` and up:
+    - Header: `flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`.
+    - Filters: `flex flex-col gap-2 sm:flex-row` with `min-w-0` on the search input.
+  - Made filter selects full-width on mobile (`w-full sm:w-[180px]`) so they stack neatly instead of cramping.
+  - Ensured the column-visibility button does not shrink awkwardly by adding `shrink-0`.
+- **Users page (`/users`)**:
+  - Applied the same responsive pattern to the header and filter row (column on small, row on `sm+`).
+  - Wrapped the user table in a dark-mode-aware, horizontally scrollable container.
+  - Constrained the email column with `max-w-xs truncate` so long addresses don’t blow out the layout on narrow screens.
+
+Result: Both Documents and Users pages now adapt cleanly across screen sizes—controls stack and resize appropriately on small devices, tables remain readable with horizontal scroll where needed, and content no longer feels cramped or broken when the browser is resized.

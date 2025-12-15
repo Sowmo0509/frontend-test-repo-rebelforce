@@ -102,7 +102,7 @@ export default function UsersPage() {
     data: any[];
     showActions?: boolean;
   }) => (
-    <div className="rounded-md border border-gray-200 bg-white overflow-x-auto">
+    <div className="rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -129,7 +129,7 @@ export default function UsersPage() {
             data.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell className="max-w-xs truncate">{user.email}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{user.role}</Badge>
                 </TableCell>
@@ -175,7 +175,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6" style={containerStyle}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
           <p className="text-base text-muted-foreground">
@@ -184,8 +184,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="flex flex-row gap-2">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users by name or email..."
@@ -195,7 +195,7 @@ export default function UsersPage() {
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filter by Role" />
           </SelectTrigger>
           <SelectContent>
